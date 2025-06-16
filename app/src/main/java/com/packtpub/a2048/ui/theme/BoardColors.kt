@@ -30,7 +30,6 @@ data class BoardColors(
     val secondaryButtonBackground: Color = Color(0xFF8C7B68)
 )
 
-
 val LocalBoardColors = staticCompositionLocalOf {
     BoardColors()
 }

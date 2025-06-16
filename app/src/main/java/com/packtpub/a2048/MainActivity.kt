@@ -4,21 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.mutableStateOf
 import com.packtpub.a2048.composable.App
+import com.packtpub.a2048.mobius.CellData
 import com.packtpub.a2048.mobius.GameEffect
 import com.packtpub.a2048.mobius.GameEffectHandler
 import com.packtpub.a2048.mobius.GameEvent
 import com.packtpub.a2048.mobius.GameModel
 import com.packtpub.a2048.mobius.GameUpdate
-import com.packtpub.a2048.viewmodel.CellData
-import com.packtpub.a2048.viewmodel.GameViewModel
 import com.spotify.mobius.Mobius
 import com.spotify.mobius.MobiusLoop
 import org.json.JSONObject
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var viewModel: GameViewModel
+    private lateinit var loop: MobiusLoop<GameModel, GameEvent, GameEffect>
 
     companion object {
         const val SECONDARY_AXIS_THRESHOLD = 40
@@ -35,11 +35,13 @@ class MainActivity : ComponentActivity() {
 
     private fun saveGameToPreferences() {
         val sharedPref = getPreferences(MODE_PRIVATE) ?: return
+        val latestModel = loop.mostRecentModel
+        if (latestModel == null) { return }
         with (sharedPref.edit()) {
-            val json = JSONObject(viewModel.getBoardHashMap().mapValues { it.value.value }).toString()
+            val json = JSONObject(latestModel.getBoardHashMap().mapValues { it.value.value }).toString()
             putString(BOARD_PREF_KEY, json)
-            putInt(SCORE_PREF_KEY, viewModel.scoreFlow.value)
-            putInt(BEST_SCORE_PREF_KEY, viewModel.bestScoreFlow.value)
+            putInt(SCORE_PREF_KEY, latestModel.score)
+            putInt(BEST_SCORE_PREF_KEY, latestModel.bestScore)
             apply()
         }
     }
@@ -56,19 +58,22 @@ class MainActivity : ComponentActivity() {
             val (x, y) = key.split(", ").map { it.toInt() }
             map[Pair(x, y)] = CellData(value = boardJsonObj.getInt(key))
         }
-        viewModel.initializeBoard()
-        viewModel.setNewBoard(map)
-        viewModel.setBestScore(bestScore)
-        viewModel.setScore(score, showAddedScore = false)
+
+        loop.dispatchEvent(
+            GameEvent.InitializeGameFromData(
+                board = map,
+                bestScore = bestScore,
+                score = score
+            )
+        )
 
         return true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = GameViewModel(4, 4)
 
-        val loop: MobiusLoop<GameModel, GameEvent, GameEffect> = Mobius
+        loop = Mobius
             .loop(GameUpdate(), GameEffectHandler())
             .startFrom(
                 GameModel()
@@ -76,13 +81,21 @@ class MainActivity : ComponentActivity() {
 
         val restoredGame = readGameFromPreferences()
         if (!restoredGame) {
-            viewModel.startGame()
+            loop.dispatchEvent(GameEvent.StartGame)
         }
-        viewModel.printBoard()
         enableEdgeToEdge()
 
+        val modelState = mutableStateOf<GameModel>(GameModel())
+
+        loop.observe { model ->
+            modelState.value = model
+        }
+
         setContent {
-            App(viewModel, loop::dispatchEvent)
+            App(
+                model = modelState.value,
+                dispatchEvent = loop::dispatchEvent
+            )
         }
     }
 }

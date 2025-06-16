@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
 android {
     namespace = "com.packtpub.a2048"
     compileSdk = 35
@@ -49,7 +53,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
     testImplementation(libs.junit)
+    testImplementation(libs.kotest.runner.junit5)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

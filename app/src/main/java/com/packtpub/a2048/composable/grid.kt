@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,16 +25,15 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.packtpub.a2048.extensions.toBackgroundAndFontColor
+import com.packtpub.a2048.mobius.Board
+import com.packtpub.a2048.mobius.GameModel
 import com.packtpub.a2048.ui.theme.BoardColors
 import com.packtpub.a2048.ui.theme.LocalBoardColors
-import com.packtpub.a2048.viewmodel.Board
-import com.packtpub.a2048.viewmodel.GameViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -58,14 +56,20 @@ private fun calcOffset(
 
 @Composable
 fun SquareGrid(
-    viewModel: GameViewModel
+    model: GameModel
+//    viewModel: GameViewModel
 ) {
-    val numCols = viewModel.numCols
-    val numRows = viewModel.numRows
+//    val numCols = viewModel.numCols
+//    val numRows = viewModel.numRows
+    val numCols = model.numCols
+    val numRows = model.numRows
 
-    val board = viewModel.boardFlow.collectAsState(mapOf()).value
-    val mergedPositions = viewModel.mergedPositions.collectAsState().value
-    val newSpawnPositions = viewModel.newSpawnPositions.collectAsState().value
+//    val board = viewModel.boardFlow.collectAsState(mapOf()).value
+//    val mergedPositions = viewModel.mergedPositions.collectAsState().value
+//    val newSpawnPositions = viewModel.newSpawnPositions.collectAsState().value
+    val board = model.board
+    val mergedPositions = model.mergedPositions
+    val newSpawnPositions = model.newSpawnPositions
 
     val boardColors = LocalBoardColors.current
     val configuration = LocalConfiguration.current
@@ -286,8 +290,8 @@ fun DrawScope.drawRectangleWithNumber(
     }
 }
 
-@Preview
-@Composable
-fun PreviewSquare() {
-    SquareGrid(GameViewModel(4, 4))
-}
+//@Preview
+//@Composable
+//fun PreviewSquare() {
+//    SquareGrid(GameViewModel(4, 4))
+//}
